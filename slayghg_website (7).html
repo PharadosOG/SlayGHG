@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SlayGHG Website</title>
+<style>
+body {
+    background: linear-gradient(120deg, #0d0d0d, #1a1a1a);
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+h1 {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #ff0055, #ffcc00, #00ffcc, #5500ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbowText 3s linear infinite;
+}
+@keyframes rainbowText {
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+.button {
+    padding: 12px 25px;
+    margin: 8px;
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, #ff0055, #ffcc00, #00ffcc, #5500ff);
+    color: #fff;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background-size: 300% 300%;
+    animation: rainbowButton 4s ease infinite;
+}
+@keyframes rainbowButton {
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+.button:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.8); }
+input.copy {
+    padding: 8px;
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 6px;
+    border: none;
+    width: 220px;
+    margin-top: 5px;
+    background: linear-gradient(90deg, #ff0055, #ffcc00, #00ffcc, #5500ff);
+    background-size: 300% 300%;
+    color:#fff;
+    animation: rainbowInput 4s ease infinite;
+}
+@keyframes rainbowInput {
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+</style>
+</head>
+<body>
+<h1>SlayGHG</h1>
+<div>
+    <a href="https://discord.gg/PY4RDCGS" target="_blank" class="button">Discord Joinen</a>
+    <input type="text" class="copy" value="Pharados.aternos.me" id="mcServer" readonly>
+    <button class="button" onclick="copyText()">Minecraft Server IP kopieren</button>
+    <button class="button" onclick="openGDWindow()">Geometry Dash spielen</button>
+    <button class="button" onclick="openCookieWindow()">Cookie Clicker spielen</button>
+</div>
+<script>
+function copyText(){
+    const copyText = document.getElementById('mcServer');
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert('IP kopiert: ' + copyText.value);
+}
+
+function openGDWindow(){
+    const savedData = JSON.parse(localStorage.getItem('GDData')) || {coins:0, color:'lime'};
+    const gdWin = window.open('', 'GDWindow', 'width=700,height=500');
+    gdWin.document.body.style.background = '#111';
+    gdWin.document.body.style.margin = '0';
+    gdWin.document.body.style.display = 'flex';
+    gdWin.document.body.style.flexDirection = 'column';
+    gdWin.document.body.style.alignItems = 'center';
+    gdWin.document.body.style.justifyContent = 'center';
+
+    let coins = savedData.coins;
+    let currentColor = savedData.color;
+
+    const canvas = gdWin.document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 300;
+    canvas.style.border = '2px solid white';
+    canvas.style.borderRadius = '10px';
+    canvas.style.background = 'linear-gradient(135deg,#ff0055,#5500ff,#00ffcc,#ffcc00)';
+    gdWin.document.body.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    let playerY = 270, playerVelocity = 0, gravity = 0.6, jumpPower = -10;
+    let obstacles = [], frame = 0;
+    let colors = ['lime','red','blue','purple','orange','pink','yellow','cyan','magenta','teal','brown','gold','silver','navy','maroon','olive','coral','limegreen','aqua','fuchsia'];
+
+    gdWin.document.addEventListener('keydown', e => { if(e.key===' '){playerVelocity = jumpPower;} });
+
+    function spawnObstacle(){
+        // Alle Hindernisse am Boden, Linien werden entfernt
+        const typeRand = Math.random();
+        let ob = {x:600,y:270,width:20+Math.random()*50,height:20,type:'block'};
+        obstacles.push(ob);
+    }
+
+    function drawShape(ob){
+        ctx.fillStyle = 'red';
+        ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+    }
+
+    function update(){
+        frame++;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        playerVelocity += gravity;
+        playerY += playerVelocity;
+        if(playerY>270) playerY=270;
+        ctx.fillStyle=currentColor;
+        ctx.fillRect(30,playerY,30,30);
+
+        if(frame%60===0) spawnObstacle();
+
+        for(let i=obstacles.length-1;i>=0;i--){
+            const ob = obstacles[i];
+            ob.x -= 4;
+            drawShape(ob);
+            // Kollision: Alles am Boden macht Schaden
+            if(30 < ob.x+ob.width && 30+30>ob.x && playerY+30 > ob.y){
+                playerY = 270;
+                playerVelocity = 0;
+                obstacles=[];
+                frame=0;
+            }
+            if(ob.x+ob.width<0){ obstacles.splice(i,1); coins++; }
+        }
+        requestAnimationFrame(update);
+    }
+    update();
+
+    const shopBtn = gdWin.document.createElement('button');
+    shopBtn.innerText='Shop';
+    shopBtn.style.marginTop='10px';
+    shopBtn.style.padding='8px 15px';
+    shopBtn.style.cursor='pointer';
+    shopBtn.addEventListener('click',()=>{
+        const shop = gdWin.document.createElement('div');
+        shop.style.marginTop='10px';
+        shop.style.color='white';
+        shop.innerHTML='<h3>GD Shop - Coins: '+coins+'</h3>';
+        colors.forEach((color,index)=>{
+            const cost = (index+1)*5;
+            const btn = gdWin.document.createElement('button');
+            btn.innerText=color+' - '+cost+' Coins';
+            btn.style.margin='3px';
+            btn.addEventListener('click',()=>{if(coins>=cost){coins-=cost;currentColor=color;alert(color+' freigeschaltet!');}});
+            shop.appendChild(btn);
+        });
+        gdWin.document.body.appendChild(shop);
+    });
+    gdWin.document.body.appendChild(shopBtn);
+
+    gdWin.addEventListener('beforeunload',()=>{
+        localStorage.setItem('GDData', JSON.stringify({coins:coins, color:currentColor}));
+    });
+}
+
+function openCookieWindow(){
+    const savedData = JSON.parse(localStorage.getItem('CookieData')) || {cookieCount:0, cursors:0, grandmas:0, farms:0, factories:0, portals:0};
+    const cookieWin = window.open('', 'CookieWindow', 'width=450,height=400');
+    cookieWin.document.body.style.background = '#111';
+    cookieWin.document.body.style.color = '#fff';
+    cookieWin.document.body.style.fontFamily = 'Arial';
+    cookieWin.document.body.style.display = 'flex';
+    cookieWin.document.body.style.flexDirection = 'column';
+    cookieWin.document.body.style.alignItems = 'center';
+    cookieWin.document.body.style.justifyContent = 'center';
+
+    let cookieCount = savedData.cookieCount, cursors = savedData.cursors, grandmas = savedData.grandmas, farms = savedData.farms, factories = savedData.factories, portals = savedData.portals;
+
+    const countDisplay = cookieWin.document.createElement('div');
+    countDisplay.innerText = 'Cookies: '+cookieCount;
+    cookieWin.document.body.appendChild(countDisplay);
+
+    const cookieBtn = cookieWin.document.createElement('div');
+    cookieBtn.id='cookieClick';
+    cookieBtn.style.width='80px';
+    cookieBtn.style.height='80px';
+    cookieBtn.style.borderRadius='50%';
+    cookieBtn.style.background='#ffcc66';
+    cookieBtn.style.border='2px solid #fff';
+    cookieBtn.style.margin='10px';
+    cookieBtn.style.cursor='pointer';
+    cookieWin.document.body.appendChild(cookieBtn);
+
+    const shopTitle = cookieWin.document.createElement('h4');
+    shopTitle.innerText = 'Shop';
+    cookieWin.document.body.appendChild(shopTitle);
+
+    function createShopItem(name,cost,callback){
+        const item = cookieWin.document.createElement('div');
+        item.className='shop-item';
+        item.innerText=`${name} - ${cost} Cookies`;
+        item.addEventListener('click',callback);
+        cookieWin.document.body.appendChild(item);
+    }
+
+    cookieBtn.addEventListener('click',()=>{cookieCount++; countDisplay.innerText='Cookies: '+cookieCount;});
+
+    createShopItem('Cursor',10,()=>{if(cookieCount>=10){cookieCount-=10;cursors++; countDisplay.innerText='Cookies: '+cookieCount;}});
+    createShopItem('Grandma',50,()=>{if(cookieCount>=50){cookieCount-=50; grandmas++; countDisplay.innerText='Cookies: '+cookieCount;}});
+    createShopItem('Farm',200,()=>{if(cookieCount>=200){cookieCount-=200; farms++; countDisplay.innerText='Cookies: '+cookieCount;}});
+    createShopItem('Factory',1000,()=>{if(cookieCount>=1000){cookieCount-=1000; factories++; countDisplay.innerText='Cookies: '+cookieCount;}});
+    createShopItem('Portal',5000,()=>{if(cookieCount>=5000){cookieCount-=5000; portals++; countDisplay.innerText='Cookies: '+cookieCount;}});
+
+    setInterval(()=>{cookieCount+=cursors+grandmas*2+farms*5+factories*20+portals*100; countDisplay.innerText='Cookies: '+cookieCount;},1000);
+
+    cookieWin.addEventListener('beforeunload',()=>{
+        localStorage.setItem('CookieData', JSON.stringify({cookieCount,cursors,grandmas,farms,factories,portals}));
+    });
+}
+</script>
+</body>
+</html>
